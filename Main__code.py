@@ -13,14 +13,14 @@ data = {'VA_names': ("валерий", "валерун", "валеран", "ва
             'общем', 'быть', 'так', 'что', 'самое', 'в', 'сделать', 'пожалуйста', 'может', 'быстро', '.', ',', '?'),
         'weather': (
             'какая погодка', 'расскажи погодку', 'расскажи погоду', "какая погода", "расскажи про погоду",
-            "скажи погоду",
-            "чё с погодой", "поведай погоду"),
+            "скажи погоду", "чё с погодой", "поведай погоду", "погода"),
         'utc_offset': {'москва': 3, 'санкт-петербург': 3, 'новосибирск': 7, 'екатеринбург': 5, 'нижний новгород': 3,
                        'казань': 3, 'челябинск': 5, 'омск': 6, 'самара': 4, 'ростов-на-дону': 3, 'уфа': 5,
                        'красноярск': 7, 'воронеж': 3, 'пермь': 5, 'волгоград': 4, 'краснодар': 3, 'калининград': 2,
                        'владивосток': 10, 'спб': 3},
         'what_time_is_it': (
-        'который час', 'сколько время', 'расскажи время', 'который сейчас час', 'сколько щас время', 'подскажи время')}
+            'который час', 'сколько время', 'расскажи время', 'который сейчас час', 'сколько щас время',
+            'подскажи время', "время")}
 
 # приветствие
 print('''
@@ -37,12 +37,15 @@ def manager_func(query):
         what_time()
     elif query in data['weather']:
         what_weather()
+    else:
+        print('Непонятный запрос какой-то\n'
+              'Для просмотра функций введи "возможности"')
 
 
 # основные функции
 # время
 def what_time():
-    offset_city = input('Где? ').lower()
+    offset_city = input('Где именно? ').lower()
     if offset_city in data['utc_offset']:
         city_time = dt.datetime.utcnow() + dt.timedelta(hours=data['utc_offset'][offset_city])
         f_time = city_time.strftime("%H:%M:%S")
@@ -53,7 +56,7 @@ def what_time():
 
 # погода
 def what_weather():
-    city = input('Где? ').lower()
+    city = input('Где именно? ').lower()
     url = f'http://wttr.in/{city}'
     weather_parameters = {
         'format': 2,
@@ -81,21 +84,24 @@ def clean_query(query):
 
 # преобразование голоса в текст
 def mic_record():
-    # проверяем сообщение | выполняется 2
-    def check_is_query(user_voice_query):
-        if user_voice_query[0] in data['VA_names']:
-            clean_query(user_voice_query)
-        else:
-            print('\n'
-                  'Если ты что-то от меня хочешь\n'
-                  'Назови моё имя вначале')
+    try:
+        # проверяем сообщение | выполняется 2
+        def check_is_query(user_voice_query):
+            if user_voice_query[0] in data['VA_names']:
+                clean_query(user_voice_query)
+            else:
+                print('\n'
+                      'Если ты что-то от меня хочешь\n'
+                      'Назови моё имя вначале')
 
-    # записываем голосовое сообщение | выполняется 1
-    r = sr.Recognizer()
-    with sr.Microphone(device_index=1) as source:
-        raw_audio = r.listen(source, phrase_time_limit=3)
-        user_audio = r.recognize_google(raw_audio, language='ru').lower()
-        check_is_query(user_audio)
+        # записываем голосовое сообщение | выполняется 1
+        r = sr.Recognizer()
+        with sr.Microphone(device_index=1) as source:
+            raw_audio = r.listen(source, phrase_time_limit=3)
+            user_audio = r.recognize_google(raw_audio, language='ru').lower()
+            check_is_query(user_audio)
+    except sr.UnknownValueError:
+        print("Нихера не слышно, говори в микрофон")
 
 
 # записываем текстовое сообщение
@@ -107,6 +113,7 @@ def text_record():
 # выбор метода ввода
 while True:
     print('Как коммандовать будешь? Текст или голос?')
+    global choice_method_input
     choice_method_input = input()
     if choice_method_input in data['input_method']['text']:
         print('Хорошо, теперь пиши команду')
